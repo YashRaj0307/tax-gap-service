@@ -2,6 +2,7 @@
 package com.avega.tax_gap_service.controller;
 
 import com.avega.tax_gap_service.domain.TaxGapAnalysis;
+import com.avega.tax_gap_service.dto.TaxGapAnalysisResponse;
 import com.avega.tax_gap_service.service.TaxGapAnalysisService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -24,19 +25,40 @@ public class TaxGapAnalysisController {
     }
 
     @PostMapping("/taxpayers/{taxpayerId}")
-    public TaxGapAnalysis analyze(
+    public TaxGapAnalysisResponse analyze(
             @PathVariable @Positive Long taxpayerId,
             @RequestParam @Min(2000) @Max(2100) Integer taxYear) {
 
-        return taxGapAnalysisService.analyze(taxpayerId, taxYear);
+        TaxGapAnalysis analysis =
+                taxGapAnalysisService.analyze(taxpayerId, taxYear);
+
+        return toResponse(analysis);
     }
 
     @GetMapping("/taxpayers/{taxpayerId}")
-    public List<TaxGapAnalysis> findAnalyses(
+    public List<TaxGapAnalysisResponse> findAnalyses(
             @PathVariable @Positive Long taxpayerId,
             @RequestParam @Min(2000) @Max(2100) Integer taxYear) {
 
-        return taxGapAnalysisService.findByTaxpayerAndYear(
-                taxpayerId, taxYear);
+        return taxGapAnalysisService
+                .findByTaxpayerAndYear(taxpayerId, taxYear)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    private TaxGapAnalysisResponse toResponse(TaxGapAnalysis analysis) {
+        return new TaxGapAnalysisResponse(
+                analysis.getId(),
+                analysis.getTaxpayer().getId(),
+                analysis.getTaxYear(),
+                analysis.getDeclaredIncome(),
+                analysis.getReportedIncome(),
+                analysis.getIncomeDiscrepancy(),
+                analysis.getDiscrepancyPercentage(),
+                analysis.getAnalysisStatus(),
+                analysis.getAnalysisReason(),
+                analysis.getAnalyzedAt()
+        );
     }
 }
