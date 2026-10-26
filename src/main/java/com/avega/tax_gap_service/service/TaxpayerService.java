@@ -7,6 +7,9 @@ import com.avega.tax_gap_service.repository.TaxpayerRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 
 @Service
@@ -17,7 +20,11 @@ public class TaxpayerService {
     public TaxpayerService(TaxpayerRepository taxpayerRepository) {
         this.taxpayerRepository = taxpayerRepository;
     }
-
+    @Transactional(readOnly = true)
+    public Page<TaxpayerResponse> findAll(Pageable pageable) {
+    return taxpayerRepository.findAll(pageable)
+            .map(this::toResponse);
+}
     @Transactional
     public TaxpayerResponse create(CreateTaxpayerRequest request) {
         Taxpayer taxpayer = new Taxpayer(
