@@ -9,7 +9,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -27,6 +31,12 @@ class ReportedIncomeConstraintIntegrationTest {
 
     @Autowired
     private ReportedIncomeRepository reportedIncomeRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     @Test
     void shouldRejectDuplicateSourceReferenceAtDatabaseLevel() {
@@ -65,6 +75,39 @@ class ReportedIncomeConstraintIntegrationTest {
         assertThrows(
                 DataIntegrityViolationException.class,
                 () -> reportedIncomeRepository.saveAndFlush(duplicate)
+        );
+    }
+
+    @Test
+    void shouldRejectReportedIncomeForNonexistentTaxpayer() {
+        TransactionTemplate transactionTemplate =
+                new TransactionTemplate(transactionManager);
+
+        transactionTemplate.setPropagationBehavior(
+                TransactionDefinition.PROPAGATION_REQUIRES_NEW
+        );
+
+        assertThrows(
+                DataIntegrityViolationException.class,
+                () -> transactionTemplate.executeWithoutResult(status ->
+                        jdbcTemplate.update(
+                                """
+                                INSERT INTO reported_income (
+                                    taxpayer_id,
+                                    reporting_source,
+                                    source_reference,
+                                    tax_year,
+                                    reported_income
+                                )
+                                VALUES (?, ?, ?, ?, ?)
+                                """,
+                                -999999L,
+                                "FOREIGN_KEY_TEST",
+                                "FK-TEST-001",
+                                2026,
+                                new BigDecimal("50000.00")
+                        )
+                )
         );
     }
 }
