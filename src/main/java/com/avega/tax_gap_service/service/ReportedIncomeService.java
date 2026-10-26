@@ -8,6 +8,8 @@ import com.avega.tax_gap_service.dto.ReportedIncomeResponse;
 import com.avega.tax_gap_service.repository.ReportedIncomeRepository;
 import com.avega.tax_gap_service.repository.TaxpayerRepository;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,40 +25,34 @@ public class ReportedIncomeService {
 
     public ReportedIncomeService(
             ReportedIncomeRepository reportedIncomeRepository,
-            TaxpayerRepository taxpayerRepository
-    ) {
+            TaxpayerRepository taxpayerRepository) {
         this.reportedIncomeRepository = reportedIncomeRepository;
         this.taxpayerRepository = taxpayerRepository;
     }
 
     @Transactional
     public ReportedIncomeResponse create(
-            CreateReportedIncomeRequest request
-    ) {
+            CreateReportedIncomeRequest request) {
         Taxpayer taxpayer = taxpayerRepository.findById(request.taxpayerId())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "Taxpayer not found: " + request.taxpayerId()
-                ));
+                        "Taxpayer not found: " + request.taxpayerId()));
 
         if (!taxpayer.getTaxYear().equals(request.taxYear())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Reported income tax year must match the taxpayer's tax year"
-            );
+                    "Reported income tax year must match the taxpayer's tax year");
         }
 
         boolean duplicate = reportedIncomeRepository
                 .existsByReportingSourceAndSourceReference(
                         request.reportingSource(),
-                        request.sourceReference()
-                );
+                        request.sourceReference());
 
         if (duplicate) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "This source reference has already been ingested"
-            );
+                    "This source reference has already been ingested");
         }
 
         ReportedIncome reportedIncome = new ReportedIncome(
@@ -64,8 +60,7 @@ public class ReportedIncomeService {
                 request.reportingSource(),
                 request.sourceReference(),
                 request.taxYear(),
-                request.reportedIncome()
-        );
+                request.reportedIncome());
 
         try {
             ReportedIncome saved =
@@ -76,21 +71,18 @@ public class ReportedIncomeService {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "A duplicate source reference or database constraint violation occurred",
-                    exception
-            );
+                    exception);
         }
     }
 
     @Transactional(readOnly = true)
     public List<ReportedIncomeResponse> findByTaxpayerAndYear(
             Long taxpayerId,
-            Integer taxYear
-    ) {
+            Integer taxYear) {
         if (!taxpayerRepository.existsById(taxpayerId)) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
-                    "Taxpayer not found: " + taxpayerId
-            );
+                    "Taxpayer not found: " + taxpayerId);
         }
 
         return reportedIncomeRepository
@@ -100,7 +92,25 @@ public class ReportedIncomeService {
                 .toList();
     }
 
-    private ReportedIncomeResponse toResponse(ReportedIncome reportedIncome) {
+    @Transactional(readOnly = true)
+    public Page<ReportedIncomeResponse> findByTaxpayerAndYear(
+            Long taxpayerId,
+            Integer taxYear,
+            Pageable pageable) {
+        if (!taxpayerRepository.existsById(taxpayerId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Taxpayer not found: " + taxpayerId);
+        }
+
+        return reportedIncomeRepository
+                .findByTaxpayerIdAndTaxYear(
+                        taxpayerId, taxYear, pageable)
+                .map(this::toResponse);
+    }
+
+    private ReportedIncomeResponse toResponse(
+            ReportedIncome reportedIncome) {
         return new ReportedIncomeResponse(
                 reportedIncome.getId(),
                 reportedIncome.getTaxpayer().getId(),
@@ -108,7 +118,6 @@ public class ReportedIncomeService {
                 reportedIncome.getSourceReference(),
                 reportedIncome.getTaxYear(),
                 reportedIncome.getReportedIncome(),
-                reportedIncome.getReceivedAt()
-        );
+                reportedIncome.getReceivedAt());
     }
 }
