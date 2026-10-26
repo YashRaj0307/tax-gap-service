@@ -30,15 +30,22 @@ class FinancialTransactionServiceTest {
     private FinancialTransactionService service;
 
     @BeforeEach
-    void setUp() throws Exception {
-        mapper = new ObjectMapper();
-        service = new FinancialTransactionService(transactions, rules, exceptions, auditEvents, mapper);
-        when(transactions.saveAndFlush(ArgumentMatchers.any(FinancialTransaction.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-        when(auditEvents.save(ArgumentMatchers.any(AuditEvent.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-        lenient().when(rules.findByEnabledTrueOrderByIdAsc()).thenReturn(List.of());
-    }
+void setUp() {
+    mapper = new ObjectMapper();
+    service = new FinancialTransactionService(
+            transactions, rules, exceptions, auditEvents, mapper);
+
+    lenient().when(transactions.saveAndFlush(
+            ArgumentMatchers.any(FinancialTransaction.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+    lenient().when(auditEvents.save(
+            ArgumentMatchers.any(AuditEvent.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+    lenient().when(rules.findByEnabledTrueOrderByIdAsc())
+            .thenReturn(List.of());
+}
 
     @Test
     void calculatesExpectedTaxAndCompliantStatus() throws Exception {
