@@ -2,6 +2,7 @@
 package com.avega.tax_gap_service.exception;
 
 import com.avega.tax_gap_service.dto.ApiErrorResponse;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +17,28 @@ import java.time.OffsetDateTime;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ResponseStatusException.class)
+@ExceptionHandler(ConstraintViolationException.class)
+public ResponseEntity<ApiErrorResponse> handleConstraintViolationException(
+        ConstraintViolationException exception,
+        HttpServletRequest request) {
+
+    String message = exception.getConstraintViolations()
+            .stream()
+            .map(violation -> violation.getPropertyPath()
+                    + ": " + violation.getMessage())
+            .findFirst()
+            .orElse("Request validation failed");
+
+    ApiErrorResponse body = new ApiErrorResponse(
+            OffsetDateTime.now(),
+            HttpStatus.BAD_REQUEST.value(),
+            HttpStatus.BAD_REQUEST.getReasonPhrase(),
+            message,
+            request.getRequestURI()
+    );
+
+    return ResponseEntity.badRequest().body(body);
+}   @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ApiErrorResponse> handleResponseStatusException(
             ResponseStatusException exception,
             HttpServletRequest request) {
