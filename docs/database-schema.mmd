@@ -1,0 +1,96 @@
+erDiagram
+    TAXPAYER ||--o{ REPORTED_INCOME : has
+    TAXPAYER ||--o{ TAX_GAP_ANALYSIS : analyzed_for
+
+    TAXPAYER {
+        bigint id PK
+        varchar taxpayer_reference UK
+        varchar legal_name
+        varchar tax_identifier UK
+        int tax_year
+        numeric declared_income
+        numeric declared_tax
+        timestamptz created_at
+    }
+    REPORTED_INCOME {
+        bigint id PK
+        bigint taxpayer_id FK
+        varchar reporting_source
+        varchar source_reference
+        int tax_year
+        numeric reported_income
+        timestamptz received_at
+    }
+    TAX_GAP_ANALYSIS {
+        bigint id PK
+        bigint taxpayer_id FK
+        int tax_year
+        numeric declared_income
+        numeric reported_income
+        numeric income_discrepancy
+        numeric discrepancy_percentage
+        varchar analysis_status
+        text analysis_reason
+        timestamptz analyzed_at
+    }
+    FINANCIAL_TRANSACTION {
+        bigint id PK
+        varchar transaction_id
+        date transaction_date
+        varchar customer_id
+        numeric amount
+        numeric tax_rate
+        numeric reported_tax
+        varchar transaction_type
+        varchar original_transaction_id
+        jsonb raw_transaction
+        varchar validation_status
+        jsonb failure_reasons
+        numeric expected_tax
+        numeric tax_gap
+        varchar compliance_status
+        timestamptz created_at
+    }
+    COMPLIANCE_RULE {
+        bigint id PK
+        varchar rule_name UK
+        varchar rule_type
+        boolean enabled
+        varchar severity
+        jsonb configuration
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    COMPLIANCE_EXCEPTION {
+        bigint id PK
+        varchar transaction_id
+        varchar customer_id
+        varchar rule_name
+        varchar severity
+        text message
+        timestamptz created_at
+    }
+    AUDIT_EVENT {
+        bigint id PK
+        varchar transaction_id
+        varchar event_type
+        timestamptz event_timestamp
+        jsonb detail_json
+    }
+    APP_USER {
+        bigint id PK
+        varchar username UK
+        varchar password_hash
+        varchar role
+        boolean enabled
+        timestamptz created_at
+    }
+    IDEMPOTENCY_RECORD {
+        bigint id PK
+        varchar idempotency_key UK
+        varchar request_fingerprint
+        int response_status
+        jsonb response_body
+        timestamptz created_at
+        timestamptz completed_at
+    }

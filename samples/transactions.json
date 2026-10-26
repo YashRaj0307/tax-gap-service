@@ -1,0 +1,47 @@
+[
+  {
+    "transactionId": "TXN-1001",
+    "date": "2026-10-20",
+    "customerId": "CUST-101",
+    "amount": 1000.00,
+    "taxRate": 0.18,
+    "reportedTax": 180.00,
+    "transactionType": "SALE"
+  },
+  {
+    "transactionId": "TXN-1002",
+    "date": "not-a-date",
+    "customerId": "CUST-102",
+    "amount": 500.00,
+    "taxRate": 0.18,
+    "reportedTax": 90.00,
+    "transactionType": "SALE"
+  },
+  {
+    "transactionId": "TXN-1003",
+    "date": "2026-10-21",
+    "customerId": "CUST-103",
+    "amount": 200.00,
+    "taxRate": 0.18,
+    "transactionType": "EXPENSE"
+  },
+  {
+    "transactionId": "TXN-1004",
+    "date": "2026-10-21",
+    "customerId": "CUST-101",
+    "amount": 150000.00,
+    "taxRate": 0.18,
+    "reportedTax": 27000.00,
+    "transactionType": "SALE"
+  },
+  {
+    "transactionId": "TXN-1005",
+    "date": "2026-10-22",
+    "customerId": "CUST-101",
+    "amount": 100.00,
+    "taxRate": 0.18,
+    "reportedTax": 18.00,
+    "transactionType": "REFUND",
+    "originalTransactionId": "TXN-1001"
+  }
+]
