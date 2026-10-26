@@ -46,7 +46,9 @@ class ReportedIncomeControllerTest {
     @Test
     void createReportedIncomeWithValidRequestReturnsCreated()
             throws Exception {
-        when(reportedIncomeService.create(any(CreateReportedIncomeRequest.class)))
+        when(reportedIncomeService.create(
+                any(CreateReportedIncomeRequest.class),
+                any()))
                 .thenReturn(new ReportedIncomeResponse(
                         1L,
                         10L,

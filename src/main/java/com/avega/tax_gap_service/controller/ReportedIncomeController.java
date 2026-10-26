@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -38,11 +39,15 @@ public class ReportedIncomeController {
         this.reportedIncomeService = reportedIncomeService;
     }
 
-    @PostMapping("/reported-income")
+        @PostMapping("/reported-income")
     @ResponseStatus(HttpStatus.CREATED)
     public ReportedIncomeResponse create(
-            @Valid @RequestBody CreateReportedIncomeRequest request) {
-        return reportedIncomeService.create(request);
+            @Valid @RequestBody CreateReportedIncomeRequest request,
+            @RequestHeader(
+                    name = "Idempotency-Key",
+                    required = false
+            ) String idempotencyKey) {
+        return reportedIncomeService.create(request, idempotencyKey);
     }
 
     @GetMapping("/taxpayers/{taxpayerId}/reported-income")
