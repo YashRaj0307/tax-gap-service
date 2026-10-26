@@ -1,4 +1,3 @@
-
 package com.avega.tax_gap_service.controller;
 
 import java.util.ArrayList;
@@ -44,6 +43,7 @@ public class FinancialTransactionController {
             @RequestParam(required = false) String customerId,
             @RequestParam(required = false) String complianceStatus,
             @RequestParam(required = false) String validationStatus) {
+
         return repository.search(
                 blankToNull(customerId),
                 normalize(complianceStatus),

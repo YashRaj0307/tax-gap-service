@@ -1,12 +1,16 @@
 
 package com.avega.tax_gap_service;
 
-import com.avega.tax_gap_service.config.SecurityConfig;
-import com.avega.tax_gap_service.controller.TaxpayerController;
-import com.avega.tax_gap_service.dto.CreateTaxpayerRequest;
-import com.avega.tax_gap_service.dto.TaxpayerResponse;
-import com.avega.tax_gap_service.service.TaxpayerService;
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -16,22 +20,19 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.avega.tax_gap_service.config.SecurityConfig;
+import com.avega.tax_gap_service.controller.TaxpayerController;
+import com.avega.tax_gap_service.dto.CreateTaxpayerRequest;
+import com.avega.tax_gap_service.dto.TaxpayerResponse;
+import com.avega.tax_gap_service.service.TaxpayerService;
 
 @WebMvcTest(TaxpayerController.class)
 @Import(SecurityConfig.class)
@@ -218,4 +219,63 @@ class TaxpayerControllerTest {
         mockMvc.perform(get("/api/v1/taxpayers/paged"))
                 .andExpect(status().isUnauthorized());
     }
+    @Test
+    void createTaxpayerWithMissingRequiredFieldsReturnsBadRequest()
+        throws Exception {
+    mockMvc.perform(post("/api/v1/taxpayers")
+                    .with(httpBasic(
+                            "devuser", "LocalDevOnly-ChangeMe-2026"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""
+                            {
+                              "taxpayerReference": "",
+                              "legalName": "",
+                              "taxIdentifier": "",
+                              "taxYear": 2026,
+                              "declaredIncome": 1000000.00,
+                              "declaredTax": 100000.00
+                            }
+                            """))
+            .andExpect(status().isBadRequest());
+
+    verifyNoInteractions(taxpayerService);
+}
+
+    @Test
+    void createTaxpayerWithMalformedJsonReturnsBadRequest()
+        throws Exception {
+    mockMvc.perform(post("/api/v1/taxpayers")
+                    .with(httpBasic(
+                            "devuser", "LocalDevOnly-ChangeMe-2026"))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{ invalid-json }"))
+            .andExpect(status().isBadRequest());
+
+    verifyNoInteractions(taxpayerService);
+}
+
+    @Test
+    void findAllPagedWithInvalidPageParameterReturnsBadRequest()
+        throws Exception {
+    mockMvc.perform(get("/api/v1/taxpayers/paged")
+                    .param("page", "abc")
+                    .with(httpBasic(
+                            "devuser", "LocalDevOnly-ChangeMe-2026")))
+            .andExpect(status().isBadRequest());
+
+    verifyNoInteractions(taxpayerService);
+}
+
+    @Test
+    void findAllPagedWithZeroPageSizeReturnsBadRequest()
+        throws Exception {
+    mockMvc.perform(get("/api/v1/taxpayers/paged")
+                    .param("size", "0")
+                    .with(httpBasic(
+                            "devuser", "LocalDevOnly-ChangeMe-2026")))
+            .andExpect(status().isBadRequest());
+
+    verifyNoInteractions(taxpayerService);
+}
+
 }
