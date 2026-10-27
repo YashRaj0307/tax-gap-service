@@ -33,6 +33,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.avega.tax_gap_service.domain.AppUser;
+import com.avega.tax_gap_service.repository.AppUserRepository;
+import com.avega.tax_gap_service.support.TestAppUserFactory;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 @WebMvcTest(ReportedIncomeController.class)
 @Import(SecurityConfig.class)
 class ReportedIncomeControllerTest {
@@ -42,6 +48,23 @@ class ReportedIncomeControllerTest {
 
     @MockitoBean
     private ReportedIncomeService reportedIncomeService;
+
+    @MockitoBean
+    private AppUserRepository appUserRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @BeforeEach
+    void configureTestUser() throws ReflectiveOperationException {
+    AppUser user = TestAppUserFactory.enabledAdmin(
+            "devuser",
+            passwordEncoder.encode("LocalDevOnly-ChangeMe-2026")
+    );
+
+    when(appUserRepository.findByUsername("devuser"))
+            .thenReturn(java.util.Optional.of(user));
+}
 
     @Test
     void createReportedIncomeWithValidRequestReturnsCreated()

@@ -4,7 +4,7 @@ package com.avega.tax_gap_service;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
-
+import com.avega.tax_gap_service.repository.AppUserRepository;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -34,6 +34,11 @@ import com.avega.tax_gap_service.dto.CreateTaxpayerRequest;
 import com.avega.tax_gap_service.dto.TaxpayerResponse;
 import com.avega.tax_gap_service.service.TaxpayerService;
 
+import com.avega.tax_gap_service.domain.AppUser;
+import com.avega.tax_gap_service.support.TestAppUserFactory;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 @WebMvcTest(TaxpayerController.class)
 @Import(SecurityConfig.class)
 class TaxpayerControllerTest {
@@ -42,7 +47,24 @@ class TaxpayerControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
+    private AppUserRepository appUserRepository;
+
+    @MockitoBean
     private TaxpayerService taxpayerService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @BeforeEach
+    void configureTestUser() throws ReflectiveOperationException {
+    AppUser user = TestAppUserFactory.enabledAdmin(
+            "devuser",
+            passwordEncoder.encode("LocalDevOnly-ChangeMe-2026")
+    );
+
+    when(appUserRepository.findByUsername("devuser"))
+            .thenReturn(java.util.Optional.of(user));
+}
 
     @Test
     void createTaxpayerWithValidRequestReturnsCreated() throws Exception {

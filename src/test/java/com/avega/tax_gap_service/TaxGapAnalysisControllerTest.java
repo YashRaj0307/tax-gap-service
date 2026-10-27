@@ -14,10 +14,16 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import com.avega.tax_gap_service.domain.AppUser;
+import com.avega.tax_gap_service.repository.AppUserRepository;
+import com.avega.tax_gap_service.support.TestAppUserFactory;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
+
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -36,6 +42,23 @@ class TaxGapAnalysisControllerTest {
 
     @MockitoBean
     private TaxGapAnalysisService taxGapAnalysisService;
+
+    @MockitoBean
+    private AppUserRepository appUserRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @BeforeEach
+    void configureTestUser() throws ReflectiveOperationException {
+    AppUser user = TestAppUserFactory.enabledAdmin(
+            "devuser",
+            passwordEncoder.encode("LocalDevOnly-ChangeMe-2026")
+      );
+
+    when(appUserRepository.findByUsername("devuser"))
+            .thenReturn(java.util.Optional.of(user));
+    }
 
     @Test
     void analyzeWithValidRequestReturnsAnalysisResponse() throws Exception {
